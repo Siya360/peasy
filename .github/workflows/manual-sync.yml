@@ -1,0 +1,36 @@
+name: Manual Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual sync'
+        required: false
+        default: 'Manual sync requested'
+
+jobs:
+  manual-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      
+    steps:
+      - name: Manual sync with upstream
+        run: |
+          echo "Manual sync triggered: ${{ github.event.inputs.reason || 'No reason provided' }}"
+          echo "Syncing with upstream..."
+          git config --global user.name 'Manual Sync Bot'
+          git config --global user.email 'manual-sync@bot.local'
+          git remote add upstream https://github.com/moltbot/moltbot.git
+          git fetch upstream
+          git checkout main
+          git rebase upstream/main
+          
+          if [ "$(git status --porcelain)" != "" ]; then
+            echo "Pushing changes to origin..."
+            git push origin main
+            echo "✅ Manual sync completed"
+          else
+            echo "No changes to push"
+          fi
